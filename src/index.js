@@ -51,6 +51,15 @@ export default {
       }
     }
 
+    // Debug: shows which Cloudflare data center runs the Worker and the room. Visit /where?room=CODE
+    if (request.method === "GET" && url.pathname === "/where") {
+      const code = url.searchParams.get("room") ?? "";
+      if (!ROOM_ID_PATTERN.test(code)) return json({ error: "invalid_room" }, 400, cors);
+      const stub = env.ROOM_RELAY.get(env.ROOM_RELAY.idFromName(`room:${code}`), { locationHint: "enam" });
+      const roomInfo = await (await stub.fetch("https://room/where")).json();
+      return json({ worker: request.cf?.colo ?? null, room: roomInfo.colo }, 200, cors);
+    }
+
     const room = roomFromPath(url.pathname);
     if (!room) return json({ error: "not_found" }, 404, cors);
     if (!originAllowed(request, env)) return json({ error: "origin_not_allowed" }, 403, cors);

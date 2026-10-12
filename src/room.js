@@ -41,6 +41,10 @@ export class RoomRelay extends DurableObject {
   }
 
   async fetch(request) {
+    if (new URL(request.url).pathname === "/where") {
+      const trace = await (await fetch("https://cloudflare.com/cdn-cgi/trace")).text();
+      return json({ colo: trace.match(/^colo=(.+)$/m)?.[1] ?? null });
+    }
     const room = request.headers.get("x-room");
     const role = request.headers.get("x-role");
     const guestId = request.headers.get("x-guest-id");
